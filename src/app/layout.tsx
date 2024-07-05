@@ -1,5 +1,8 @@
+import ReLoading from "@/components/ReLoading";
+import StoreProvider from "@/utils/provider";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -15,8 +18,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
-    </html>
+    <StoreProvider>
+      <html lang="en">
+        <body className={`${inter.className} bg-gray-200 min-h-screen`}>
+          <Suspense fallback={<ReLoading />}>
+            <main className="container px-12 py-16 mx-auto ">{children}</main>
+          </Suspense>
+        </body>
+      </html>
+    </StoreProvider>
   );
 }
