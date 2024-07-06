@@ -10,7 +10,7 @@ export default function useGetData() {
   const getData = async () => {
     try {
       dispatch(setIsLoading(true));
-      const ress = await fetch("https://contact.herokuapp.com/contact");
+      const ress = await fetch(`${process.env.NEXT_PUBLIC_BASE_API_URL}`);
       if (ress.ok) {
         const { data } = await ress.json();
         setdataContacts(data);

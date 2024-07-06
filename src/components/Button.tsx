@@ -4,6 +4,7 @@ type Props = {
   onClick?: () => void;
   form?: string;
   type?: "button" | "submit";
+  id?: string;
 };
 
 const Button = (props: Props) => {
@@ -13,7 +14,7 @@ const Button = (props: Props) => {
       form={props.form}
       type={props.type}
       {...props}
-      className={`${props.color} py-2 px-4 rounded-xl text-white`}
+      className={`${props.color} py-2 px-2 rounded-xl text-white`}
     >
       {props.title}
     </button>

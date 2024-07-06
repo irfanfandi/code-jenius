@@ -22,7 +22,9 @@ export default function RootLayout({
       <html lang="en">
         <body className={`${inter.className} bg-gray-200 min-h-screen`}>
           <Suspense fallback={<ReLoading />}>
-            <main className="container px-12 py-16 mx-auto ">{children}</main>
+            <main className="container px-6 sm:px-20 py-12 mx-auto ">
+              {children}
+            </main>
           </Suspense>
         </body>
       </html>

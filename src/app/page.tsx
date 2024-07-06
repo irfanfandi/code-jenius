@@ -1,5 +1,4 @@
 "use client";
-
 import Button from "@/components/Button";
 import ReLoading from "@/components/ReLoading";
 import useGetData from "@/hooks/contact";
@@ -15,7 +14,30 @@ export default function Home() {
   const { dataContacts, refetchContact } = useGetData();
   const [showModal, setShowModal] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
-  // const dispatch = useDispatch();
+  const dispatch = useDispatch();
+
+  const handleDeleteData = async (id: string) => {
+    dispatch(setIsLoading(true));
+    try {
+      const ress = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_API_URL}/${id}`,
+        {
+          headers: { "Content-Type": "application/json" },
+          method: "DELETE",
+        }
+      );
+      if (ress.ok) {
+        alert("Success delete data");
+        refetchContact();
+        return;
+      }
+      alert("Failed delete data");
+    } catch (error) {
+      alert("Failed delete data");
+    } finally {
+      dispatch(setIsLoading(false));
+    }
+  };
 
   return (
     <>
@@ -24,6 +46,7 @@ export default function Home() {
         <div className="space-x-2">
           <Button
             color={"bg-purple-500"}
+            id="add-button"
             title={
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -52,9 +75,9 @@ export default function Home() {
             return (
               <div
                 key={e.id}
-                className="flex gap-4 mt-2 justify-between items-center bg-white w-full p-4 rounded-xl"
+                className="flex gap-4 mt-2  items-center bg-white w-full p-4 rounded-xl"
               >
-                <div>
+                <div className="w-1/12">
                   <Image
                     src={
                       new RegExp("^(https?:\\/\\/)?").test(e.photo)
@@ -67,20 +90,21 @@ export default function Home() {
                     className="w-14 h-14 rounded-full"
                   />
                 </div>
-                <div>
+                <div className="w-3/12">
                   <h6 className="text-gray-500">First name</h6>
                   <p>{e.firstName}</p>
                 </div>
-                <div>
+                <div className="w-3/12">
                   <h6 className="text-gray-500">Last name</h6>
                   <p>{e.lastName}</p>
                 </div>
-                <div>
+                <div className="w-3/12">
                   <h6 className="text-gray-500">Age</h6>
                   <p>{e.age}</p>
                 </div>
-                <div className=" space-x-2 space-y-2 items-center">
+                <div className="w-1/12 lg:space-x-2 space-y-2 items-center">
                   <Button
+                    id={`edit-button-${e.firstName}`}
                     color={"bg-gray-500"}
                     onClick={() => {
                       setSelectedData(e);
@@ -104,7 +128,15 @@ export default function Home() {
                     }
                   />
                   <Button
+                    id={`delete-button-${e.firstName}`}
                     color={"bg-red-500"}
+                    onClick={() => {
+                      if (
+                        confirm("Are you sure you want to delete the data?")
+                      ) {
+                        handleDeleteData(e.id);
+                      }
+                    }}
                     title={
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -128,7 +160,7 @@ export default function Home() {
           })}
       </section>
       {showModal && (
-        <ModalForm
+        <ModalFormAddUpdate
           selectedData={selectedData}
           onClose={() => {
             setShowModal(false);
@@ -155,10 +187,11 @@ const initialValues: TformData = {
   firstName: "",
   lastName: "",
   age: 0,
-  photo: "",
+  photo:
+    "http://vignette1.wikia.nocookie.net/lotr/images/6/68/Bilbo_baggins.jpg/revision/latest?cb=20130202022550",
 };
 
-const ModalForm = ({
+const ModalFormAddUpdate = ({
   selectedData,
   onClose,
   refetchContact,
@@ -178,24 +211,38 @@ const ModalForm = ({
     });
   };
 
+  const createContact = async () => {
+    return fetch(`${process.env.NEXT_PUBLIC_BASE_API_URL}`, {
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+      body: JSON.stringify(formData),
+    });
+  };
+
+  const updateContact = async () => {
+    return fetch(`${process.env.NEXT_PUBLIC_BASE_API_URL}/${selectedData.id}`, {
+      headers: { "Content-Type": "application/json" },
+      method: "PUT",
+      body: JSON.stringify(formData),
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(formData);
-
     try {
       dispatch(setIsLoading(true));
-      const ress = await fetch("https://contact.herokuapp.com/contact", {
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
-        body: JSON.stringify(formData),
-      });
+      const ress = selectedData?.id
+        ? await updateContact()
+        : await createContact();
 
       if (ress.ok) {
         onClose();
         refetchContact();
+        return;
       }
+      alert("Failed save data");
     } catch (error) {
-      console.log(error, "error");
+      alert("Failed save data");
     } finally {
       dispatch(setIsLoading(false));
     }
@@ -221,7 +268,9 @@ const ModalForm = ({
           <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
             {/*header*/}
             <div className="flex items-start justify-between p-5 border-b border-solid border-blueGray-200 rounded-t">
-              <h3 className="text-xl font-semibold">Add Contact</h3>
+              <h3 className="text-xl font-semibold">
+                {selectedData?.id ? "Edit Contact" : "Add Contact"}
+              </h3>
               <button
                 className="p-1 ml-auto bg-transparent border-0 text-black  float-right text-3xl leading-none font-semibold outline-none focus:outline-none"
                 onClick={onClose}
@@ -243,12 +292,14 @@ const ModalForm = ({
                 <input
                   value={formData.firstName}
                   onChange={handleInputChange}
+                  required
                   name="firstName"
                   className="w-full border border-solid border-[#919EAB52] px-2 pb-2 pt-4 rounded-lg  placeholder:text-[#919EAB]"
                   placeholder="First Name"
                 />
                 <input
                   value={formData.lastName}
+                  required
                   onChange={handleInputChange}
                   name="lastName"
                   className="w-full border border-solid border-[#919EAB52] px-2 pb-2 pt-4 rounded-lg  placeholder:text-[#919EAB]"
@@ -256,15 +307,28 @@ const ModalForm = ({
                 />
                 <input
                   value={formData.age}
+                  required
                   type="number"
+                  min={10}
+                  max={150}
                   onChange={handleInputChange}
                   name="age"
                   className="w-full border border-solid border-[#919EAB52] px-2 pb-2 pt-4 rounded-lg  placeholder:text-[#919EAB]"
                   placeholder="Age"
                 />
+                <input
+                  value={formData.photo}
+                  onChange={handleInputChange}
+                  required
+                  name="photo"
+                  type="url"
+                  className="w-full border border-solid border-[#919EAB52] px-2 pb-2 pt-4 rounded-lg  placeholder:text-[#919EAB]"
+                  placeholder="Phot0"
+                />
               </form>
               <div className="flex-col items-center justify-center space-y-4 mt-6">
                 <Button
+                  id="submit-button"
                   form="form-todo"
                   color={"bg-purple-500 w-full"}
                   title={"Simpan"}
