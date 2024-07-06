@@ -1,5 +1,9 @@
 describe("Home", () => {
   const BASE_API_URL = "https://contact.herokuapp.com/contact";
+  const firstName= (Math.random() + 1)
+    .toString(36)
+    .substring(2)
+    .replace(/[0-9]/g, "");
 
   it("should navigate to the home page", () => {
     cy.visit("http://localhost:3000/");
@@ -13,7 +17,7 @@ describe("Home", () => {
     cy.get('button[id="add-button"]').click();
     cy.get("h3").contains("Add Contact");
     cy.wait(3000);
-    cy.get("input[name=firstName]").type("Bambang");
+    cy.get("input[name=firstName]").type(`${firstName}`);
     cy.get("input[name=lastName]").type("Budi");
     cy.get("input[name=age]").type(25);
     cy.get("input[name=photo]").type(
@@ -27,7 +31,7 @@ describe("Home", () => {
 
     // test update contact
     cy.wait(3000);
-    cy.get("button[id^='edit-button-Bambang']").click();
+    cy.get(`button[id^='edit-button-${firstName}']`).click();
     cy.get("h3").contains("Edit Contact");
     cy.wait(3000);
     cy.get("input[name=firstName]").type("Edit");
@@ -38,7 +42,7 @@ describe("Home", () => {
 
     // test delete contact
     cy.wait(3000);
-    cy.get("button[id^='delete-button-Bambang']").click();
+    cy.get(`button[id^='delete-button-${firstName}']`).click();
     cy.intercept("DELETE", BASE_API_URL).as("deleteContact");
     cy.on("window:alert", (text) => {
       expect(text).to.contains("Are you sure you want to delete the data?");
